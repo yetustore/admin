@@ -1,9 +1,21 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
+import { getAdminMe, loginAdmin, logoutAdmin, getAccessToken } from '@/lib/api';
+
+interface AdminUser {
+  id: string;
+  username: string;
+  name: string;
+  email: string;
+  role: 'Super Admin' | 'Admin' | 'Moderador';
+  active: boolean;
+  createdAt: string;
+}
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  user: { username: string } | null;
-  login: (username: string, password: string) => boolean;
+  isLoading: boolean;
+  user: AdminUser | null;
+  login: (username: string, password: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -16,28 +28,40 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<{ username: string } | null>(() => {
-    const saved = sessionStorage.getItem('yetu_admin');
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [user, setUser] = useState<AdminUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const login = useCallback((username: string, password: string) => {
-    if (username === 'admin' && password === 'admin123') {
-      const u = { username };
-      setUser(u);
-      sessionStorage.setItem('yetu_admin', JSON.stringify(u));
-      return true;
-    }
-    return false;
+  useEffect(() => {
+    const init = async () => {
+      const token = getAccessToken();
+      if (!token) {
+        setIsLoading(false);
+        return;
+      }
+      try {
+        const admin = await getAdminMe();
+        setUser(admin);
+      } catch {
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    init();
+  }, []);
+
+  const login = useCallback(async (username: string, password: string) => {
+    const admin = await loginAdmin(username, password);
+    setUser(admin);
   }, []);
 
   const logout = useCallback(() => {
+    logoutAdmin();
     setUser(null);
-    sessionStorage.removeItem('yetu_admin');
   }, []);
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated: !!user, user, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated: !!user, isLoading, user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

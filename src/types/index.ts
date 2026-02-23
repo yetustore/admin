@@ -23,14 +23,40 @@ export interface Order {
   id: string;
   productId: string;
   customerName: string;
+  customerPhone?: string;
   address: string;
-  latitude: number;
-  longitude: number;
+  latitude?: number;
+  longitude?: number;
   scheduledDate: string;
   scheduledTime: string;
-  status: 'Agendado' | 'Em Progresso' | 'Comprado' | 'Cancelado';
+  status: 'agendado' | 'em_progresso' | 'comprado' | 'cancelado';
   affiliateId?: string;
+  affiliateCode?: string;
+  affiliateName?: string;
   createdAt: string;
+  product?: Product;
+}
+
+export interface AffiliateOrderSummary {
+  id: string;
+  status: 'agendado' | 'em_progresso' | 'comprado' | 'cancelado';
+  scheduledDate: string;
+  scheduledTime: string;
+  createdAt: string;
+}
+
+export interface AffiliateLink {
+  id: string;
+  userId: string;
+  productId: string;
+  code: string;
+  url: string;
+  clicks: number;
+  ordersCount: number;
+  createdAt: string;
+  affiliateName?: string;
+  product?: Product;
+  orders?: AffiliateOrderSummary[];
 }
 
 export interface Affiliate {
@@ -50,7 +76,19 @@ export interface Commission {
   status: 'Pendente' | 'Validada' | 'Paga';
 }
 
-export interface AdminUser {
+
+export interface AffiliatePayout {
+  id: string;
+  userId: string;
+  amount: number;
+  status: 'requested' | 'paid' | 'denied';
+  createdAt: string;
+  affiliateName?: string;
+  bankName?: string;
+  iban?: string;
+  accountName?: string;
+  phone?: string;
+}\n {
   id: string;
   username: string;
   name: string;
@@ -59,3 +97,4 @@ export interface AdminUser {
   active: boolean;
   createdAt: string;
 }
+

@@ -14,7 +14,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     if (!username.trim() || !password.trim()) {
@@ -22,15 +22,14 @@ const Login = () => {
       return;
     }
     setLoading(true);
-    setTimeout(() => {
-      const ok = login(username, password);
-      if (ok) {
-        navigate('/');
-      } else {
-        setError('Credenciais inválidas');
-      }
+    try {
+      await login(username, password);
+      navigate('/');
+    } catch (err: any) {
+      setError(err?.message || 'Erro ao autenticar');
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   return (
@@ -69,7 +68,7 @@ const Login = () => {
                 type="password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="********"
                 className="pl-10 bg-secondary border-border"
                 maxLength={100}
               />
@@ -83,10 +82,6 @@ const Login = () => {
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? 'Entrando...' : 'Entrar'}
           </Button>
-
-          <p className="text-xs text-center text-muted-foreground">
-            Credenciais: admin / admin123
-          </p>
         </form>
       </div>
     </div>

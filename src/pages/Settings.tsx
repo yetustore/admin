@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Pencil, Trash2, Shield, Search, UserCog } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-const emptyAdmin = { username: '', name: '', email: '', role: 'Admin' as AdminUser['role'], active: true };
+const emptyAdmin = { username: '', name: '', email: '', role: 'Admin' as AdminUser['role'], active: true, password: '' };
 
 const Settings = () => {
   const { admins, addAdmin, updateAdmin, deleteAdmin } = useStore();
@@ -39,32 +39,57 @@ const Settings = () => {
 
   const openEdit = (admin: AdminUser) => {
     setEditingId(admin.id);
-    setForm({ username: admin.username, name: admin.name, email: admin.email, role: admin.role, active: admin.active });
+    setForm({ username: admin.username, name: admin.name, email: admin.email, role: admin.role, active: admin.active, password: '' });
     setDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.username.trim() || !form.name.trim() || !form.email.trim()) {
       toast({ title: 'Erro', description: 'Preencha todos os campos obrigatórios.', variant: 'destructive' });
       return;
     }
-    if (editingId) {
-      updateAdmin(editingId, form);
-      toast({ title: 'Administrador atualizado com sucesso.' });
-    } else {
-      addAdmin(form);
-      toast({ title: 'Administrador cadastrado com sucesso.' });
+
+    if (!editingId && !form.password.trim()) {
+      toast({ title: 'Erro', description: 'Defina uma senha para o novo administrador.', variant: 'destructive' });
+      return;
     }
-    setDialogOpen(false);
+
+    try {
+      if (editingId) {
+        const payload = {
+          username: form.username,
+          name: form.name,
+          email: form.email,
+          role: form.role,
+          active: form.active,
+          ...(form.password.trim() ? { password: form.password.trim() } : {}),
+        };
+        await updateAdmin(editingId, payload);
+        toast({ title: 'Administrador atualizado com sucesso.' });
+      } else {
+        await addAdmin({
+          username: form.username,
+          name: form.name,
+          email: form.email,
+          role: form.role,
+          active: form.active,
+          password: form.password.trim(),
+        });
+        toast({ title: 'Administrador cadastrado com sucesso.' });
+      }
+      setDialogOpen(false);
+    } catch (err: any) {
+      toast({ title: 'Erro', description: err?.message || 'Falha ao salvar administrador.', variant: 'destructive' });
+    }
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (deletingId) {
       const admin = admins.find(a => a.id === deletingId);
       if (admin?.role === 'Super Admin') {
         toast({ title: 'Erro', description: 'Não é possível excluir um Super Admin.', variant: 'destructive' });
       } else {
-        deleteAdmin(deletingId);
+        await deleteAdmin(deletingId);
         toast({ title: 'Administrador removido.' });
       }
     }
@@ -148,7 +173,7 @@ const Settings = () => {
                           {admin.active ? 'Ativo' : 'Inativo'}
                         </Badge>
                       </TableCell>
-                      <TableCell>{admin.createdAt}</TableCell>
+                      <TableCell>{new Date(admin.createdAt).toLocaleString('pt-BR')}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
                           <Button variant="ghost" size="icon" onClick={() => openEdit(admin)}>
@@ -174,7 +199,6 @@ const Settings = () => {
         </CardContent>
       </Card>
 
-      {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -200,6 +224,10 @@ const Settings = () => {
             <div className="space-y-2">
               <Label>Email *</Label>
               <Input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="email@exemplo.com" />
+            </div>
+            <div className="space-y-2">
+              <Label>{editingId ? 'Nova senha' : 'Senha *'}</Label>
+              <Input type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} placeholder={editingId ? 'Opcional' : 'Defina uma senha'} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -231,7 +259,6 @@ const Settings = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>

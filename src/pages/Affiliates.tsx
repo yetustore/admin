@@ -1,134 +1,104 @@
-import React from 'react';
-import { useStore } from '@/contexts/StoreContext';
+import React, { useEffect, useState } from 'react';
+import { getAffiliateLinks } from '@/lib/api';
+import { AffiliateLink } from '@/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { DollarSign, ShoppingCart, CheckCircle, TrendingUp } from 'lucide-react';
-import { toast } from 'sonner';
+import { Link2, MousePointerClick } from 'lucide-react';
+import { onSocket } from '@/lib/socket';
+
+const statusLabel: Record<string, string> = {
+  agendado: 'Agendado',
+  em_progresso: 'Em Progresso',
+  comprado: 'Comprado',
+  cancelado: 'Cancelado',
+};
 
 const Affiliates = () => {
-  const { affiliates, commissions, orders, products, updateCommissionStatus } = useStore();
+  const [links, setLinks] = useState<AffiliateLink[]>([]);
 
-  const formatAOA = (v: number) => new Intl.NumberFormat('pt-AO').format(v) + ' AOA';
-
-  const getAffiliateCommissions = (affId: string) => commissions.filter(c => c.affiliateId === affId);
-
-  const handlePayCommission = (commissionId: string) => {
-    updateCommissionStatus(commissionId, 'Paga');
-    toast.success('Comissão marcada como paga');
+  const load = async () => {
+    const data = await getAffiliateLinks();
+    setLinks(data);
   };
 
-  const statusClass: Record<string, string> = {
-    'Pendente': 'badge-warning',
-    'Validada': 'badge-info',
-    'Paga': 'badge-success',
-  };
+  useEffect(() => {
+    load();
+    const off = onSocket('affiliates.updated', () => load());
+    return () => off();
+  }, []);
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Afiliados & Comissões</h1>
-        <p className="text-sm text-muted-foreground">{affiliates.length} afiliados ativos</p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-        {affiliates.map(aff => {
-          const affCommissions = getAffiliateCommissions(aff.id);
-          const pending = affCommissions.filter(c => c.status !== 'Paga').reduce((s, c) => s + c.amount, 0);
-          return (
-            <div key={aff.id} className="glass-card p-5 space-y-4 animate-fade-in">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">{aff.name}</h3>
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <TrendingUp className="w-4 h-4 text-primary" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 rounded-lg bg-secondary">
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground"><ShoppingCart className="w-3.5 h-3.5" />Total Pedidos</div>
-                  <p className="text-xl font-bold mt-1">{aff.totalOrders}</p>
-                </div>
-                <div className="p-3 rounded-lg bg-secondary">
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground"><CheckCircle className="w-3.5 h-3.5" />Concluídos</div>
-                  <p className="text-xl font-bold mt-1">{aff.completedOrders}</p>
-                </div>
-                <div className="p-3 rounded-lg bg-secondary">
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground"><DollarSign className="w-3.5 h-3.5" />Acumulado</div>
-                  <p className="text-sm font-bold mt-1">{formatAOA(aff.accumulatedCommission)}</p>
-                </div>
-                <div className="p-3 rounded-lg bg-secondary">
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground"><DollarSign className="w-3.5 h-3.5" />Pago</div>
-                  <p className="text-sm font-bold mt-1 text-primary">{formatAOA(aff.paidCommission)}</p>
-                </div>
-              </div>
-
-              {affCommissions.length > 0 && (
-                <div>
-                  <h4 className="text-xs font-semibold text-muted-foreground mb-2">Comissões</h4>
-                  <div className="space-y-2">
-                    {affCommissions.map(c => {
-                      const order = orders.find(o => o.id === c.orderId);
-                      const prod = order ? products.find(p => p.id === order.productId) : null;
-                      return (
-                        <div key={c.id} className="flex items-center justify-between p-2 rounded bg-background/50 text-sm">
-                          <div>
-                            <span className="text-foreground">{prod?.name || c.orderId}</span>
-                            <span className="ml-2 text-muted-foreground">{formatAOA(c.amount)}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className={statusClass[c.status]}>{c.status}</span>
-                            {c.status === 'Validada' && (
-                              <Button size="sm" variant="outline" className="h-6 text-xs" onClick={() => handlePayCommission(c.id)}>
-                                Pagar
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
+        <h1 className="text-2xl font-bold">Afiliados</h1>
+        <p className="text-sm text-muted-foreground">{links.length} links gerados</p>
       </div>
 
       <div className="glass-card overflow-hidden">
-        <div className="p-4 border-b border-border">
-          <h3 className="font-semibold">Todas as Comissões</h3>
-        </div>
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Afiliado</TableHead>
-              <TableHead>Pedido</TableHead>
-              <TableHead>Valor</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
+              <TableHead>Produto</TableHead>
+              <TableHead>Código</TableHead>
+              <TableHead>Cliques</TableHead>
+              <TableHead>Pedidos</TableHead>
+              <TableHead>Link</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {commissions.map(c => {
-              const aff = affiliates.find(a => a.id === c.affiliateId);
-              const order = orders.find(o => o.id === c.orderId);
-              const prod = order ? products.find(p => p.id === order.productId) : null;
-              return (
-                <TableRow key={c.id}>
-                  <TableCell className="font-medium">{aff?.name}</TableCell>
-                  <TableCell className="text-muted-foreground">{prod?.name || c.orderId}</TableCell>
-                  <TableCell>{formatAOA(c.amount)}</TableCell>
-                  <TableCell><span className={statusClass[c.status]}>{c.status}</span></TableCell>
-                  <TableCell className="text-right">
-                    {c.status === 'Validada' && (
-                      <Button size="sm" variant="outline" onClick={() => handlePayCommission(c.id)}>Marcar como Paga</Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+            {links.map(l => (
+              <TableRow key={l.id}>
+                <TableCell className="font-medium">{l.affiliateName || ''}</TableCell>
+                <TableCell>{l.product?.name || l.productId}</TableCell>
+                <TableCell className="text-muted-foreground">{l.code}</TableCell>
+                <TableCell>
+                  <span className="inline-flex items-center gap-1 text-muted-foreground">
+                    <MousePointerClick className="h-3.5 w-3.5" /> {l.clicks}
+                  </span>
+                </TableCell>
+                <TableCell>{l.ordersCount}</TableCell>
+                <TableCell>
+                  <a href={l.url} target="_blank" className="inline-flex items-center gap-1 text-primary hover:underline">
+                    <Link2 className="h-3.5 w-3.5" /> Abrir
+                  </a>
+                </TableCell>
+              </TableRow>
+            ))}
+            {links.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                  Nenhum link encontrado
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
+      </div>
+
+      <div className="space-y-4">
+        {links.map(l => (
+          <div key={l.id} className="glass-card p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-semibold">{l.product?.name}</p>
+                <p className="text-xs text-muted-foreground">Afiliado: {l.affiliateName || ''} - {l.code}</p>
+              </div>
+              <div className="text-xs text-muted-foreground">{l.ordersCount} pedidos</div>
+            </div>
+            {l.orders && l.orders.length > 0 && (
+              <div className="mt-3 space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">Pedidos via este link:</p>
+                {l.orders.map(order => (
+                  <div key={order.id} className="flex items-center justify-between rounded-lg bg-secondary/50 px-3 py-2 text-sm">
+                    <span className="text-foreground">#{order.id.slice(-4)}</span>
+                    <span className="text-xs text-muted-foreground">{order.scheduledDate} {order.scheduledTime}</span>
+                    <span className="text-xs font-medium">{statusLabel[order.status]}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );

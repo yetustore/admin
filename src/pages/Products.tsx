@@ -42,7 +42,7 @@ const Products = () => {
     }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.name.trim()) { toast.error('Nome é obrigatório'); return; }
     if (!form.price || Number(form.price) <= 0) { toast.error('Preço inválido'); return; }
     if (form.selectedCategories.length === 0) { toast.error('Selecione ao menos uma categoria'); return; }
@@ -53,9 +53,13 @@ const Products = () => {
       rating: Number(form.rating), stock: Number(form.stock) || 0, categories: form.selectedCategories,
     };
 
-    if (editing) { updateProduct(editing.id, data); toast.success('Produto atualizado'); }
-    else { addProduct(data); toast.success('Produto criado'); }
-    setDialogOpen(false);
+    try {
+      if (editing) { await updateProduct(editing.id, data); toast.success('Produto atualizado'); }
+      else { await addProduct(data); toast.success('Produto criado'); }
+      setDialogOpen(false);
+    } catch (err: any) {
+      toast.error(err?.message || 'Erro ao salvar produto');
+    }
   };
 
   const getCatNames = (ids: string[]) => ids.map(id => categories.find(c => c.id === id)?.name).filter(Boolean).join(', ');
@@ -119,7 +123,7 @@ const Products = () => {
                 <span className="text-xs text-muted-foreground">Estoque: {p.stock}</span>
                 <div className="flex gap-1">
                   <Button variant="ghost" size="sm" onClick={() => openEdit(p)}><Pencil className="w-4 h-4" /></Button>
-                  <Button variant="ghost" size="sm" onClick={() => { deleteProduct(p.id); toast.success('Produto excluído'); }} className="hover:text-destructive"><Trash2 className="w-4 h-4" /></Button>
+                  <Button variant="ghost" size="sm" onClick={async () => { await deleteProduct(p.id); toast.success('Produto excluído'); }} className="hover:text-destructive"><Trash2 className="w-4 h-4" /></Button>
                 </div>
               </div>
             </div>

@@ -24,22 +24,30 @@ const Categories = () => {
   const openNew = () => { setEditing(null); setForm({ name: '', description: '' }); setDialogOpen(true); };
   const openEdit = (c: Category) => { setEditing(c); setForm({ name: c.name, description: c.description }); setDialogOpen(true); };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.name.trim()) { toast.error('Nome é obrigatório'); return; }
-    if (editing) {
-      updateCategory(editing.id, form);
-      toast.success('Categoria atualizada');
-    } else {
-      addCategory(form);
-      toast.success('Categoria criada');
+    try {
+      if (editing) {
+        await updateCategory(editing.id, form);
+        toast.success('Categoria atualizada');
+      } else {
+        await addCategory(form);
+        toast.success('Categoria criada');
+      }
+      setDialogOpen(false);
+    } catch (err: any) {
+      toast.error(err?.message || 'Erro ao salvar categoria');
     }
-    setDialogOpen(false);
   };
 
-  const handleDelete = (id: string) => {
-    const ok = deleteCategory(id);
-    if (!ok) toast.error('Não é possível excluir categoria vinculada a produtos');
-    else toast.success('Categoria excluída');
+  const handleDelete = async (id: string) => {
+    try {
+      const ok = await deleteCategory(id);
+      if (!ok) toast.error('Não é possível excluir categoria vinculada a produtos');
+      else toast.success('Categoria excluída');
+    } catch (err: any) {
+      toast.error(err?.message || 'Erro ao excluir categoria');
+    }
   };
 
   const getProductCount = (catId: string) => products.filter(p => p.categories.includes(catId)).length;

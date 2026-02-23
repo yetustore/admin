@@ -12,6 +12,7 @@ import Products from "./pages/Products";
 import Categories from "./pages/Categories";
 import Orders from "./pages/Orders";
 import Affiliates from "./pages/Affiliates";
+import AffiliatePayouts from "./pages/AffiliatePayouts";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
@@ -33,6 +34,7 @@ const App = () => (
                 <Route path="/categories" element={<Categories />} />
                 <Route path="/orders" element={<Orders />} />
                 <Route path="/affiliates" element={<Affiliates />} />
+                <Route path="/affiliates/payouts" element={<AffiliatePayouts />} />
                 <Route path="/settings" element={<Settings />} />
               </Route>
               <Route path="*" element={<NotFound />} />
