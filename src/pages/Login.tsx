@@ -23,8 +23,13 @@ const Login = () => {
     }
     setLoading(true);
     try {
-      await login(username, password);
-      navigate('/');
+      const admin = await login(username, password);
+      // Entregador users don't have access to most pages, send them directly to orders
+      if (admin.role === 'Entregador') {
+        navigate('/orders');
+      } else {
+        navigate('/');
+      }
     } catch (err: any) {
       setError(err?.message || 'Erro ao autenticar');
     } finally {

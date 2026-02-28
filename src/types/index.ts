@@ -88,12 +88,14 @@ export interface AffiliatePayout {
   iban?: string;
   accountName?: string;
   phone?: string;
-}\n {
+}
+
+export interface AdminUser {
   id: string;
   username: string;
   name: string;
   email: string;
-  role: 'Super Admin' | 'Admin' | 'Moderador';
+  role: 'Super Admin' | 'Admin' | 'Entregador';
   active: boolean;
   createdAt: string;
 }

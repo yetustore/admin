@@ -1,25 +1,16 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
 import { getAdminMe, loginAdmin, logoutAdmin, getAccessToken } from '@/lib/api';
-
-interface AdminUser {
-  id: string;
-  username: string;
-  name: string;
-  email: string;
-  role: 'Super Admin' | 'Admin' | 'Moderador';
-  active: boolean;
-  createdAt: string;
-}
+import { AdminUser } from '@/types';
 
 interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   user: AdminUser | null;
-  login: (username: string, password: string) => Promise<void>;
+  login: (username: string, password: string) => Promise<AdminUser>;
   logout: () => void;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+export const AuthContext = createContext<AuthContextType | null>(null);
 
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
@@ -53,6 +44,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = useCallback(async (username: string, password: string) => {
     const admin = await loginAdmin(username, password);
     setUser(admin);
+    return admin;
   }, []);
 
   const logout = useCallback(() => {
@@ -60,8 +52,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
   }, []);
 
+  const value = React.useMemo(() => ({
+    isAuthenticated: !!user,
+    isLoading,
+    user,
+    login,
+    logout,
+  }), [user, isLoading, login, logout]);
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated: !!user, isLoading, user, login, logout }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

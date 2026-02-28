@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '@/contexts/StoreContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { AdminUser } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,12 +19,27 @@ const emptyAdmin = { username: '', name: '', email: '', role: 'Admin' as AdminUs
 const Settings = () => {
   const { admins, addAdmin, updateAdmin, deleteAdmin } = useStore();
   const { toast } = useToast();
+  const { user } = useAuth();
+
+  // available role options depend on current user
+  const roleOptions: AdminUser['role'][] = user?.role === 'Super Admin'
+    ? ['Super Admin', 'Admin', 'Entregador']
+    : user?.role === 'Admin'
+      ? ['Entregador']
+      : [];
+
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyAdmin);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // when editing an existing admin and the current user's allowed options don't
+  // include that admin's role, still show it so the disabled select has a value
+  const optionsToRender = editingId && !roleOptions.includes(form.role)
+    ? [form.role, ...roleOptions]
+    : roleOptions;
 
   const filtered = admins.filter(a =>
     a.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -33,7 +49,11 @@ const Settings = () => {
 
   const openCreate = () => {
     setEditingId(null);
-    setForm(emptyAdmin);
+    // default role should be first available for this user
+    setForm({
+      ...emptyAdmin,
+      role: roleOptions[0] || 'Admin',
+    });
     setDialogOpen(true);
   };
 
@@ -51,6 +71,12 @@ const Settings = () => {
 
     if (!editingId && !form.password.trim()) {
       toast({ title: 'Erro', description: 'Defina uma senha para o novo administrador.', variant: 'destructive' });
+      return;
+    }
+
+    // makes sure an "Admin" user cannot assign any role other than Entregador
+    if (user?.role === 'Admin' && form.role !== 'Entregador') {
+      toast({ title: 'Permissão negada', description: 'Você só pode criar ou editar usuários com papel Entregador.', variant: 'destructive' });
       return;
     }
 
@@ -101,7 +127,7 @@ const Settings = () => {
     const variants: Record<string, string> = {
       'Super Admin': 'bg-primary/20 text-primary border-primary/30',
       'Admin': 'bg-accent/20 text-accent-foreground border-accent/30',
-      'Moderador': 'bg-muted text-muted-foreground border-border',
+      'Entregador': 'bg-muted text-muted-foreground border-border',
     };
     return <Badge variant="outline" className={variants[role]}>{role}</Badge>;
   };
@@ -123,7 +149,7 @@ const Settings = () => {
                 <CardDescription>Cadastre e gerencie os usuários administrativos.</CardDescription>
               </div>
             </div>
-            <Button onClick={openCreate} size="sm">
+            <Button onClick={openCreate} size="sm" disabled={roleOptions.length === 0}>
               <Plus className="h-4 w-4 mr-1" /> Novo Admin
             </Button>
           </div>
@@ -232,16 +258,20 @@ const Settings = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Papel</Label>
-                <Select value={form.role} onValueChange={(v) => setForm(f => ({ ...f, role: v as AdminUser['role'] }))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Super Admin">Super Admin</SelectItem>
-                    <SelectItem value="Admin">Admin</SelectItem>
-                    <SelectItem value="Moderador">Moderador</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Select
+              value={form.role}
+              onValueChange={(v) => setForm(f => ({ ...f, role: v as AdminUser['role'] }))}
+              disabled={user?.role === 'Admin' && !!editingId} // admins cannot change roles once created
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {optionsToRender.map(r => (
+                  <SelectItem key={r} value={r}>{r}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
               </div>
               <div className="space-y-2">
                 <Label>Status</Label>

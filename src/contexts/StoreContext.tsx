@@ -156,14 +156,37 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
     setAdmins(prev => prev.filter(a => a.id !== id));
   }, []);
 
-  return (
-    <StoreContext.Provider value={{
+  const value = React.useMemo(
+    () => ({
       categories, products, orders, affiliates, commissions, admins,
       addCategory, updateCategory, deleteCategory,
       addProduct, updateProduct, deleteProduct,
       updateOrderStatus, updateCommissionStatus,
       addAdmin, updateAdmin, deleteAdmin,
-    }}>
+    }),
+    [
+      categories,
+      products,
+      orders,
+      affiliates,
+      commissions,
+      admins,
+      addCategory,
+      updateCategory,
+      deleteCategory,
+      addProduct,
+      updateProduct,
+      deleteProduct,
+      updateOrderStatus,
+      updateCommissionStatus,
+      addAdmin,
+      updateAdmin,
+      deleteAdmin,
+    ],
+  );
+
+  return (
+    <StoreContext.Provider value={value}>
       {children}
     </StoreContext.Provider>
   );

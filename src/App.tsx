@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { RequireRole } from "@/components/RequireRole";
 import { StoreProvider } from "@/contexts/StoreContext";
 import AdminLayout from "@/components/layout/AdminLayout";
 import Login from "./pages/Login";
@@ -29,13 +30,65 @@ const App = () => (
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route element={<AdminLayout />}>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/products" element={<Products />} />
-                <Route path="/categories" element={<Categories />} />
-                <Route path="/orders" element={<Orders />} />
-                <Route path="/affiliates" element={<Affiliates />} />
-                <Route path="/affiliates/payouts" element={<AffiliatePayouts />} />
-                <Route path="/settings" element={<Settings />} />
+                <Route
+                  path="/"
+                  element={
+                    <RequireRole roles={[
+                      'Super Admin',
+                      'Admin',
+                    ]}>
+                      <Dashboard />
+                    </RequireRole>
+                  }
+                />
+                <Route
+                  path="/products"
+                  element={
+                    <RequireRole roles={['Super Admin', 'Admin']}>
+                      <Products />
+                    </RequireRole>
+                  }
+                />
+                <Route
+                  path="/categories"
+                  element={
+                    <RequireRole roles={['Super Admin', 'Admin']}>
+                      <Categories />
+                    </RequireRole>
+                  }
+                />
+                <Route
+                  path="/orders"
+                  element={
+                    <RequireRole roles={['Super Admin', 'Admin', 'Entregador']}>
+                      <Orders />
+                    </RequireRole>
+                  }
+                />
+                <Route
+                  path="/affiliates"
+                  element={
+                    <RequireRole roles={['Super Admin', 'Admin']}>
+                      <Affiliates />
+                    </RequireRole>
+                  }
+                />
+                <Route
+                  path="/affiliates/payouts"
+                  element={
+                    <RequireRole roles={['Super Admin', 'Admin']}>
+                      <AffiliatePayouts />
+                    </RequireRole>
+                  }
+                />
+                <Route
+                  path="/settings"
+                  element={
+                    <RequireRole roles={['Super Admin', 'Admin']}>
+                      <Settings />
+                    </RequireRole>
+                  }
+                />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
