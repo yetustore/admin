@@ -12,7 +12,7 @@ export default defineConfig(({ mode }) => ({
     },
   },
   preview: {
-    allowedHosts: ["adminyetustore.onrender.com"],
+    allowedHosts: ["adminyetustore.onrender.com", "adminyetustore.shop"],
   },
   plugins: [react()],
   resolve: {
@@ -21,3 +21,4 @@ export default defineConfig(({ mode }) => ({
     },
   },
 }));
+
