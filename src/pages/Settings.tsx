@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Pencil, Trash2, Shield, Search, UserCog } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-const emptyAdmin = { username: '', name: '', email: '', role: 'Admin' as AdminUser['role'], active: true, password: '' };
+const emptyAdmin = { username: '', name: '', email: '', phone: '', role: 'Admin' as AdminUser['role'], active: true, password: '' };
 
 const Settings = () => {
   const { admins, addAdmin, updateAdmin, deleteAdmin } = useStore();
@@ -44,7 +44,8 @@ const Settings = () => {
   const filtered = admins.filter(a =>
     a.name.toLowerCase().includes(search.toLowerCase()) ||
     a.username.toLowerCase().includes(search.toLowerCase()) ||
-    a.email.toLowerCase().includes(search.toLowerCase())
+    a.email.toLowerCase().includes(search.toLowerCase()) ||
+    a.phone.toLowerCase().includes(search.toLowerCase())
   );
 
   const openCreate = () => {
@@ -59,12 +60,12 @@ const Settings = () => {
 
   const openEdit = (admin: AdminUser) => {
     setEditingId(admin.id);
-    setForm({ username: admin.username, name: admin.name, email: admin.email, role: admin.role, active: admin.active, password: '' });
+    setForm({ username: admin.username, name: admin.name, email: admin.email, phone: admin.phone || '', role: admin.role, active: admin.active, password: '' });
     setDialogOpen(true);
   };
 
   const handleSave = async () => {
-    if (!form.username.trim() || !form.name.trim() || !form.email.trim()) {
+    if (!form.username.trim() || !form.name.trim() || !form.email.trim() || !form.phone.trim()) {
       toast({ title: 'Erro', description: 'Preencha todos os campos obrigatórios.', variant: 'destructive' });
       return;
     }
@@ -74,7 +75,6 @@ const Settings = () => {
       return;
     }
 
-    // makes sure an "Admin" user cannot assign any role other than Entregador
     if (user?.role === 'Admin' && form.role !== 'Entregador') {
       toast({ title: 'Permissão negada', description: 'Você só pode criar ou editar usuários com papel Entregador.', variant: 'destructive' });
       return;
@@ -86,6 +86,7 @@ const Settings = () => {
           username: form.username,
           name: form.name,
           email: form.email,
+          phone: form.phone,
           role: form.role,
           active: form.active,
           ...(form.password.trim() ? { password: form.password.trim() } : {}),
@@ -97,6 +98,7 @@ const Settings = () => {
           username: form.username,
           name: form.name,
           email: form.email,
+          phone: form.phone,
           role: form.role,
           active: form.active,
           password: form.password.trim(),
@@ -174,6 +176,7 @@ const Settings = () => {
                   <TableHead>Nome</TableHead>
                   <TableHead>Usuário</TableHead>
                   <TableHead>Email</TableHead>
+                  <TableHead>Telemóvel</TableHead>
                   <TableHead>Papel</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Criado em</TableHead>
@@ -183,7 +186,7 @@ const Settings = () => {
               <TableBody>
                 {filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                       Nenhum administrador encontrado.
                     </TableCell>
                   </TableRow>
@@ -193,6 +196,7 @@ const Settings = () => {
                       <TableCell className="font-medium">{admin.name}</TableCell>
                       <TableCell>{admin.username}</TableCell>
                       <TableCell>{admin.email}</TableCell>
+                      <TableCell>{admin.phone}</TableCell>
                       <TableCell>{roleBadge(admin.role)}</TableCell>
                       <TableCell>
                         <Badge variant={admin.active ? 'default' : 'secondary'}>
@@ -247,9 +251,15 @@ const Settings = () => {
                 <Input value={form.username} onChange={e => setForm(f => ({ ...f, username: e.target.value }))} placeholder="usuario" />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label>Email *</Label>
-              <Input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="email@exemplo.com" />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Email *</Label>
+                <Input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="email@exemplo.com" />
+              </div>
+              <div className="space-y-2">
+                <Label>Telemóvel *</Label>
+                <Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="+244 9xx xxx xxx" />
+              </div>
             </div>
             <div className="space-y-2">
               <Label>{editingId ? 'Nova senha' : 'Senha *'}</Label>
