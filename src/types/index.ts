@@ -5,6 +5,11 @@ export interface Category {
   createdAt: string;
 }
 
+export type ProductMedia = {
+  type: 'image' | 'video';
+  url: string;
+};
+
 export interface Product {
   id: string;
   name: string;
@@ -13,6 +18,7 @@ export interface Product {
   currency: string;
   categories: string[];
   imageUrl: string;
+  media?: ProductMedia[];
   rating: number;
   stock: number;
   createdAt: string;
@@ -100,4 +106,3 @@ export interface AdminUser {
   active: boolean;
   createdAt: string;
 }
-

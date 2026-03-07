@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
 import { Order } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -21,7 +22,8 @@ const statusLabel: Record<Order['status'], string> = {
 };
 
 const Orders = () => {
-  const { orders, updateOrderStatus } = useStore();
+  const { orders } = useStore();
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
 
@@ -65,12 +67,18 @@ const Orders = () => {
               <TableHead className="hidden lg:table-cell">Agendamento</TableHead>
               <TableHead className="hidden md:table-cell">Endereço</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Alterar Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.map(o => (
-              <TableRow key={o.id}>
+              <TableRow
+                key={o.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => navigate(`/orders/${o.id}`)}
+                onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/orders/${o.id}`); }}
+                className="cursor-pointer"
+              >
                 <TableCell className="font-medium">{o.product?.name || o.productId}</TableCell>
                 <TableCell>{o.customerName}</TableCell>
                 <TableCell>{o.customerPhone || '-'}</TableCell>
@@ -87,18 +95,10 @@ const Orders = () => {
                   </div>
                 </TableCell>
                 <TableCell><span className={statusStyles[o.status]}>{statusLabel[o.status]}</span></TableCell>
-                <TableCell>
-                  <Select value={o.status} onValueChange={(v) => updateOrderStatus(o.id, v as Order['status'])}>
-                    <SelectTrigger className="w-[140px] h-8 text-xs bg-secondary"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {allStatuses.map(s => <SelectItem key={s} value={s}>{statusLabel[s]}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </TableCell>
               </TableRow>
             ))}
             {filtered.length === 0 && (
-              <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Nenhum pedido encontrado</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhum pedido encontrado</TableCell></TableRow>
             )}
           </TableBody>
         </Table>

@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
 import Categories from "./pages/Categories";
 import Orders from "./pages/Orders";
+import OrderDetail from "./pages/OrderDetail";
 import Affiliates from "./pages/Affiliates";
 import AffiliatePayouts from "./pages/AffiliatePayouts";
 import Settings from "./pages/Settings";
@@ -66,6 +67,14 @@ const App = () => (
                   }
                 />
                 <Route
+                  path="/orders/:id"
+                  element={
+                    <RequireRole roles={['Super Admin', 'Admin', 'Entregador']}>
+                      <OrderDetail />
+                    </RequireRole>
+                  }
+                />
+                <Route
                   path="/affiliates"
                   element={
                     <RequireRole roles={['Super Admin', 'Admin']}>
@@ -100,3 +109,4 @@ const App = () => (
 );
 
 export default App;
+
