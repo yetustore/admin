@@ -7,10 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Pencil, Trash2, Search, Star } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Star, X } from 'lucide-react';
 import { toast } from 'sonner';
 
-const defaultForm = { name: '', description: '', price: '', imageUrl: '', rating: '4', stock: '', selectedCategories: [] as string[] };
+const defaultMediaItem = { type: 'image' as const, url: '' };
+const defaultForm = { name: '', description: '', price: '', rating: '4', stock: '', selectedCategories: [] as string[], media: [defaultMediaItem] };
 
 const Products = () => {
   const { products, categories, addProduct, updateProduct, deleteProduct } = useStore();
@@ -28,8 +29,20 @@ const Products = () => {
 
   const openNew = () => { setEditing(null); setForm(defaultForm); setDialogOpen(true); };
   const openEdit = (p: Product) => {
+    const media = (p.media && p.media.length > 0)
+      ? p.media
+      : (p.imageUrl ? [{ type: 'image' as const, url: p.imageUrl }] : [defaultMediaItem]);
+
     setEditing(p);
-    setForm({ name: p.name, description: p.description, price: String(p.price), imageUrl: p.imageUrl, rating: String(p.rating), stock: String(p.stock), selectedCategories: [...p.categories] });
+    setForm({
+      name: p.name,
+      description: p.description,
+      price: String(p.price),
+      rating: String(p.rating),
+      stock: String(p.stock),
+      selectedCategories: [...p.categories],
+      media,
+    });
     setDialogOpen(true);
   };
 
@@ -42,15 +55,50 @@ const Products = () => {
     }));
   };
 
+  const updateMedia = (idx: number, patch: { type?: 'image' | 'video'; url?: string }) => {
+    setForm(f => {
+      const media = f.media.map((m, i) => (i === idx ? { ...m, ...patch } : m));
+      return { ...f, media };
+    });
+  };
+
+  const addMedia = () => setForm(f => ({ ...f, media: [...f.media, { ...defaultMediaItem }] }));
+  const removeMedia = (idx: number) => setForm(f => ({ ...f, media: f.media.filter((_, i) => i !== idx) }));
+
+  const cleanMedia = () => {
+    return form.media
+      .map(m => ({ type: m.type, url: m.url.trim() }))
+      .filter(m => m.url);
+  };
+
+  const getPrimaryImage = (prod: Product) => {
+    const media = (prod.media && prod.media.length > 0)
+      ? prod.media
+      : (prod.imageUrl ? [{ type: 'image' as const, url: prod.imageUrl }] : []);
+    const first = media.find(m => m.type === 'image' && m.url);
+    return first?.url || prod.imageUrl || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400';
+  };
+
   const handleSave = async () => {
     if (!form.name.trim()) { toast.error('Nome é obrigatório'); return; }
     if (!form.price || Number(form.price) <= 0) { toast.error('Preço inválido'); return; }
     if (form.selectedCategories.length === 0) { toast.error('Selecione ao menos uma categoria'); return; }
 
+    const media = cleanMedia();
+    const hasImage = media.some(m => m.type === 'image');
+    if (!hasImage) { toast.error('Informe ao menos uma foto'); return; }
+
+    const primaryImage = media.find(m => m.type === 'image')?.url || '';
     const data = {
-      name: form.name, description: form.description, price: Number(form.price),
-      currency: 'AOA' as const, imageUrl: form.imageUrl || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400',
-      rating: Number(form.rating), stock: Number(form.stock) || 0, categories: form.selectedCategories,
+      name: form.name,
+      description: form.description,
+      price: Number(form.price),
+      currency: 'AOA' as const,
+      imageUrl: primaryImage,
+      media,
+      rating: Number(form.rating),
+      stock: Number(form.stock) || 0,
+      categories: form.selectedCategories,
     };
 
     try {
@@ -100,8 +148,8 @@ const Products = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {filtered.map(p => (
           <div key={p.id} className="glass-card overflow-hidden animate-fade-in">
-            <div className="h-40 overflow-hidden">
-              <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
+            <div className="h-40 overflow-hidden bg-secondary flex items-center justify-center">
+              <img src={getPrimaryImage(p)} alt={p.name} className="w-full h-full object-contain p-2" />
             </div>
             <div className="p-4 space-y-3">
               <div className="flex items-start justify-between">
@@ -148,8 +196,53 @@ const Products = () => {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2"><Label>Rating</Label><Input type="number" min="0" max="5" step="0.1" value={form.rating} onChange={e => setForm(f => ({ ...f, rating: e.target.value }))} className="bg-secondary" /></div>
-              <div className="space-y-2"><Label>URL da Imagem</Label><Input value={form.imageUrl} onChange={e => setForm(f => ({ ...f, imageUrl: e.target.value }))} className="bg-secondary" placeholder="https://..." maxLength={500} /></div>
             </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Mídias (fotos e vídeos)</Label>
+                <Button type="button" variant="outline" size="sm" onClick={addMedia}>
+                  <Plus className="w-4 h-4 mr-1" />Adicionar
+                </Button>
+              </div>
+              <div className="space-y-2">
+                {form.media.map((m, idx) => (
+                  <div key={idx} className="grid grid-cols-12 gap-2">
+                    <div className="col-span-4">
+                      <Select value={m.type} onValueChange={(v) => updateMedia(idx, { type: v as 'image' | 'video' })}>
+                        <SelectTrigger className="bg-secondary"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="image">Foto</SelectItem>
+                          <SelectItem value="video">Vídeo</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="col-span-7">
+                      <Input
+                        value={m.url}
+                        onChange={e => updateMedia(idx, { url: e.target.value })}
+                        className="bg-secondary"
+                        placeholder="https://..."
+                        maxLength={500}
+                      />
+                    </div>
+                    <div className="col-span-1 flex items-center justify-center">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeMedia(idx)}
+                        disabled={form.media.length === 1}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">Mínimo: 1 foto. Vídeos devem ser links diretos.</p>
+            </div>
+
             <div className="space-y-2">
               <Label>Categorias</Label>
               <div className="flex flex-wrap gap-2">
@@ -181,3 +274,4 @@ const Products = () => {
 };
 
 export default Products;
+
