@@ -25,9 +25,16 @@ export interface Product {
   updatedAt: string;
 }
 
+export interface OrderItem {
+  productId: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  product?: Product;
+}
+
 export interface Order {
   id: string;
-  productId: string;
   customerName: string;
   customerPhone?: string;
   address: string;
@@ -41,6 +48,8 @@ export interface Order {
   affiliateName?: string;
   createdAt: string;
   product?: Product;
+  items: OrderItem[];
+  totalAmount: number;
 }
 
 export interface AffiliateOrderSummary {

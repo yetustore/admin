@@ -21,20 +21,31 @@ const statusLabel: Record<Order['status'], string> = {
   cancelado: 'Cancelado',
 };
 
+const formatPrice = (value: number) => new Intl.NumberFormat('pt-AO').format(value) + ' AOA';
+
 const Orders = () => {
   const { orders } = useStore();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
 
-  let filtered = orders.filter(o =>
-    o.customerName.toLowerCase().includes(search.toLowerCase()) ||
-    (o.customerPhone || '').includes(search.toLowerCase()) ||
-    o.product?.name?.toLowerCase().includes(search.toLowerCase())
-  );
+  const normalizedSearch = search.toLowerCase();
+  let filtered = orders.filter(o => {
+    const matchesProduct = o.items?.some(item => item.product?.name?.toLowerCase().includes(normalizedSearch));
+    return (
+      o.customerName.toLowerCase().includes(normalizedSearch) ||
+      (o.customerPhone || '').includes(normalizedSearch) ||
+      Boolean(matchesProduct)
+    );
+  });
   if (filterStatus !== 'all') filtered = filtered.filter(o => o.status === filterStatus);
 
   const allStatuses: Order['status'][] = ['agendado', 'em_progresso', 'comprado', 'cancelado'];
+
+  const getTotalQuantity = (order: Order) => {
+    const items = order.items || [];
+    return items.reduce((sum, item) => sum + item.quantity, 0);
+  };
 
   return (
     <div className="space-y-6">
@@ -61,12 +72,13 @@ const Orders = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Produto</TableHead>
+              <TableHead>Quantidade solicitada</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Telefone</TableHead>
               <TableHead className="hidden lg:table-cell">Agendamento</TableHead>
               <TableHead className="hidden md:table-cell">Endereço</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Total</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -79,7 +91,9 @@ const Orders = () => {
                 onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/orders/${o.id}`); }}
                 className="cursor-pointer"
               >
-                <TableCell className="font-medium">{o.product?.name || o.productId}</TableCell>
+                <TableCell className="max-w-[320px] align-top text-sm font-semibold text-foreground">
+                  {getTotalQuantity(o)} unidades
+                </TableCell>
                 <TableCell>{o.customerName}</TableCell>
                 <TableCell>{o.customerPhone || '-'}</TableCell>
                 <TableCell className="hidden lg:table-cell">
@@ -95,10 +109,11 @@ const Orders = () => {
                   </div>
                 </TableCell>
                 <TableCell><span className={statusStyles[o.status]}>{statusLabel[o.status]}</span></TableCell>
+                <TableCell className="text-right text-sm font-semibold">{formatPrice(o.totalAmount)}</TableCell>
               </TableRow>
             ))}
             {filtered.length === 0 && (
-              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhum pedido encontrado</TableCell></TableRow>
+              <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Nenhum pedido encontrado</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
@@ -108,3 +123,8 @@ const Orders = () => {
 };
 
 export default Orders;
+
+
+
+
+
