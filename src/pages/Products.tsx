@@ -11,7 +11,7 @@ import { Plus, Pencil, Trash2, Search, Star, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 const defaultMediaItem = { type: 'image' as const, url: '' };
-const defaultForm = { name: '', description: '', price: '', rating: '4', stock: '', selectedCategories: [] as string[], media: [defaultMediaItem] };
+const defaultForm = { name: '', description: '', price: '', rating: '4', stock: '', affiliatePercent: '5', selectedCategories: [] as string[], media: [defaultMediaItem] };
 
 const Products = () => {
   const { products, categories, addProduct, updateProduct, deleteProduct } = useStore();
@@ -40,6 +40,7 @@ const Products = () => {
       price: String(p.price),
       rating: String(p.rating),
       stock: String(p.stock),
+      affiliatePercent: String(p.affiliatePercent ?? 0),
       selectedCategories: [...p.categories],
       media,
     });
@@ -82,6 +83,11 @@ const Products = () => {
   const handleSave = async () => {
     if (!form.name.trim()) { toast.error('Nome é obrigatório'); return; }
     if (!form.price || Number(form.price) <= 0) { toast.error('Preço inválido'); return; }
+    const affiliatePercent = Number(form.affiliatePercent);
+    if (Number.isNaN(affiliatePercent) || affiliatePercent < 0 || affiliatePercent > 100) {
+      toast.error('Percentual de afiliado deve estar entre 0 e 100');
+      return;
+    }
     if (form.selectedCategories.length === 0) { toast.error('Selecione ao menos uma categoria'); return; }
 
     const media = cleanMedia();
@@ -98,6 +104,7 @@ const Products = () => {
       media,
       rating: Number(form.rating),
       stock: Number(form.stock) || 0,
+      affiliatePercent,
       categories: form.selectedCategories,
     };
 
@@ -196,6 +203,10 @@ const Products = () => {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2"><Label>Rating</Label><Input type="number" min="0" max="5" step="0.1" value={form.rating} onChange={e => setForm(f => ({ ...f, rating: e.target.value }))} className="bg-secondary" /></div>
+            </div>
+            <div className="space-y-2">
+              <Label>Percentual de Afiliado (%)</Label>
+              <Input type="number" min="0" max="100" value={form.affiliatePercent} onChange={e => setForm(f => ({ ...f, affiliatePercent: e.target.value }))} className="bg-secondary" />
             </div>
 
             <div className="space-y-2">

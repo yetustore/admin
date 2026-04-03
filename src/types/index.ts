@@ -21,6 +21,7 @@ export interface Product {
   media?: ProductMedia[];
   rating: number;
   stock: number;
+  affiliatePercent: number;
   createdAt: string;
   updatedAt: string;
 }
