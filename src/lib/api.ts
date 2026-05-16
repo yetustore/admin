@@ -204,6 +204,30 @@ export const deleteAdmin = async (id) => {
   await withRefresh(() => apiFetch(`/admins/${id}`, { method: 'DELETE' }));
 };
 
+export const getPlatformUsers = async (query = '') => {
+  const search = query.trim();
+  const suffix = search ? `?q=${encodeURIComponent(search)}` : '';
+  return withRefresh(() => apiFetch(`/users${suffix}`));
+};
+
+export const getPlatformUserById = async (id) => {
+  const data = await withRefresh(() => apiFetch(`/users/${id}`));
+  return data.user;
+};
+
+export const updatePlatformUser = async (id, payload) => {
+  const data = await withRefresh(() => apiFetch(`/users/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  }));
+  return data.user;
+};
+
+export const getPlatformUserWallet = async (id) => {
+  const data = await withRefresh(() => apiFetch(`/users/${id}/wallet`));
+  return data.wallet;
+};
+
 export const getDashboard = async () => {
   const data = await withRefresh(() => apiFetch('/dashboard'));
   return data;

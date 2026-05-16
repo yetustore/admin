@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useStore } from '@/contexts/StoreContext';
 import { Category } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Pencil, Trash2, Search } from 'lucide-react';
 import { toast } from 'sonner';
+import { usePagination } from '@/hooks/usePagination';
+import PaginationControls from '@/components/admin/PaginationControls';
 
 const Categories = () => {
   const { categories, products, addCategory, updateCategory, deleteCategory } = useStore();
@@ -20,6 +22,19 @@ const Categories = () => {
   const filtered = categories.filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase())
   );
+  const {
+    page,
+    setPage,
+    currentItems,
+    totalPages,
+    totalItems,
+    startItem,
+    endItem,
+  } = usePagination(filtered, 10);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, setPage]);
 
   const openNew = () => { setEditing(null); setForm({ name: '', description: '' }); setDialogOpen(true); };
   const openEdit = (c: Category) => { setEditing(c); setForm({ name: c.name, description: c.description }); setDialogOpen(true); };
@@ -67,7 +82,7 @@ const Categories = () => {
         <Input placeholder="Buscar categorias..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10 bg-secondary" />
       </div>
 
-      <div className="glass-card overflow-hidden">
+      <div className="admin-scroll-surface overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
@@ -79,7 +94,7 @@ const Categories = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map(c => (
+            {currentItems.map(c => (
               <TableRow key={c.id}>
                 <TableCell className="font-medium">{c.name}</TableCell>
                 <TableCell className="hidden sm:table-cell text-muted-foreground">{c.description}</TableCell>
@@ -91,15 +106,25 @@ const Categories = () => {
                 </TableCell>
               </TableRow>
             ))}
-            {filtered.length === 0 && (
+            {currentItems.length === 0 && (
               <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhuma categoria encontrada</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
+        <div className="px-4 pb-4">
+          <PaginationControls
+            page={page}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            startItem={startItem}
+            endItem={endItem}
+            onPageChange={setPage}
+          />
+        </div>
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="bg-card border-border">
+        <DialogContent className="admin-scroll bg-card border-border">
           <DialogHeader>
             <DialogTitle>{editing ? 'Editar Categoria' : 'Nova Categoria'}</DialogTitle>
           </DialogHeader>

@@ -63,10 +63,31 @@
 @layer base {
   * {
     @apply border-border;
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--primary) / 0.65) hsl(var(--secondary) / 0.9);
   }
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  *::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: hsl(var(--secondary) / 0.7);
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, hsl(var(--primary) / 0.85), hsl(var(--primary) / 0.4));
+    border-radius: 9999px;
+    border: 2px solid hsl(var(--secondary) / 0.9);
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, hsl(var(--primary)), hsl(var(--primary) / 0.55));
   }
 }
 
@@ -95,6 +116,9 @@
     @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
     background: hsl(var(--info) / 0.15);
     color: hsl(var(--info));
+  }
+  .admin-scroll-surface {
+    @apply rounded-2xl border border-border/70 bg-card/70 shadow-[0_12px_40px_hsl(var(--background)/0.24)];
   }
 }
 

@@ -1,19 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getAffiliateLinks } from '@/lib/api';
 import { AffiliateLink } from '@/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Link2, MousePointerClick } from 'lucide-react';
 import { onSocket } from '@/lib/socket';
-
-const statusLabel: Record<string, string> = {
-  agendado: 'Agendado',
-  em_progresso: 'Em Progresso',
-  comprado: 'Comprado',
-  cancelado: 'Cancelado',
-};
+import { usePagination } from '@/hooks/usePagination';
+import PaginationControls from '@/components/admin/PaginationControls';
 
 const Affiliates = () => {
   const [links, setLinks] = useState<AffiliateLink[]>([]);
+  const {
+    page,
+    setPage,
+    currentItems,
+    totalPages,
+    totalItems,
+    startItem,
+    endItem,
+  } = usePagination(links, 10);
 
   const load = async () => {
     const data = await getAffiliateLinks();
@@ -33,7 +37,7 @@ const Affiliates = () => {
         <p className="text-sm text-muted-foreground">{links.length} links gerados</p>
       </div>
 
-      <div className="glass-card overflow-hidden">
+      <div className="admin-scroll-surface overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
@@ -46,7 +50,7 @@ const Affiliates = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {links.map(l => (
+            {currentItems.map(l => (
               <TableRow key={l.id}>
                 <TableCell className="font-medium">{l.affiliateName || ''}</TableCell>
                 <TableCell>{l.product?.name || l.productId}</TableCell>
@@ -64,7 +68,7 @@ const Affiliates = () => {
                 </TableCell>
               </TableRow>
             ))}
-            {links.length === 0 && (
+            {currentItems.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                   Nenhum link encontrado
@@ -73,32 +77,16 @@ const Affiliates = () => {
             )}
           </TableBody>
         </Table>
-      </div>
-
-      <div className="space-y-4">
-        {links.map(l => (
-          <div key={l.id} className="glass-card p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-semibold">{l.product?.name}</p>
-                <p className="text-xs text-muted-foreground">Afiliado: {l.affiliateName || ''} - {l.code}</p>
-              </div>
-              <div className="text-xs text-muted-foreground">{l.ordersCount} pedidos</div>
-            </div>
-            {l.orders && l.orders.length > 0 && (
-              <div className="mt-3 space-y-2">
-                <p className="text-xs font-medium text-muted-foreground">Pedidos via este link:</p>
-                {l.orders.map(order => (
-                  <div key={order.id} className="flex items-center justify-between rounded-lg bg-secondary/50 px-3 py-2 text-sm">
-                    <span className="text-foreground">#{order.id.slice(-4)}</span>
-                    <span className="text-xs text-muted-foreground">{order.scheduledDate} {order.scheduledTime}</span>
-                    <span className="text-xs font-medium">{statusLabel[order.status]}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
+        <div className="px-4 pb-4">
+          <PaginationControls
+            page={page}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            startItem={startItem}
+            endItem={endItem}
+            onPageChange={setPage}
+          />
+        </div>
       </div>
     </div>
   );

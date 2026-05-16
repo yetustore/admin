@@ -16,6 +16,9 @@ import OrderDetail from "./pages/OrderDetail";
 import Affiliates from "./pages/Affiliates";
 import AffiliatePayouts from "./pages/AffiliatePayouts";
 import Settings from "./pages/Settings";
+import SettingsAdmins from "./pages/SettingsAdmins";
+import SettingsUsers from "./pages/SettingsUsers";
+import SettingsUserEdit from "./pages/SettingsUserEdit";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -95,6 +98,30 @@ const App = () => (
                   element={
                     <RequireRole roles={['Super Admin', 'Admin']}>
                       <Settings />
+                    </RequireRole>
+                  }
+                />
+                <Route
+                  path="/settings/administradores"
+                  element={
+                    <RequireRole roles={['Super Admin', 'Admin']}>
+                      <SettingsAdmins />
+                    </RequireRole>
+                  }
+                />
+                <Route
+                  path="/settings/usuarios"
+                  element={
+                    <RequireRole roles={['Super Admin', 'Admin']}>
+                      <SettingsUsers />
+                    </RequireRole>
+                  }
+                />
+                <Route
+                  path="/settings/usuarios/:id"
+                  element={
+                    <RequireRole roles={['Super Admin', 'Admin']}>
+                      <SettingsUserEdit />
                     </RequireRole>
                   }
                 />

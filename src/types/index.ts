@@ -116,3 +116,51 @@ export interface AdminUser {
   active: boolean;
   createdAt: string;
 }
+
+export interface PlatformUser {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  provider: 'local' | 'google';
+  emailVerified: boolean;
+  phoneVerified: boolean;
+  bankAccountName: string;
+  bankName: string;
+  bankIban: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PlatformUserWalletOrder {
+  orderId: string;
+  totalAmount: number;
+  commission: number;
+  status: 'agendado' | 'em_progresso' | 'comprado' | 'cancelado';
+  scheduledDate: string;
+  scheduledTime: string;
+  createdAt: string;
+}
+
+export interface PlatformUserWalletPayout {
+  id: string;
+  amount: number;
+  status: 'requested' | 'paid' | 'denied';
+  createdAt: string;
+}
+
+export interface PlatformUserWallet {
+  totalEarned: number;
+  totalWithdrawn: number;
+  pendingWithdrawals: number;
+  available: number;
+  minWithdraw: number;
+  maxWithdraw: number;
+  bank: {
+    accountName: string;
+    bankName: string;
+    iban: string;
+  };
+  payouts: PlatformUserWalletPayout[];
+  earningsByOrder: PlatformUserWalletOrder[];
+}

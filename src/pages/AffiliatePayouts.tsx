@@ -5,6 +5,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { onSocket } from '@/lib/socket';
 import { Check, X } from 'lucide-react';
+import { usePagination } from '@/hooks/usePagination';
+import PaginationControls from '@/components/admin/PaginationControls';
 
 const statusLabel: Record<AffiliatePayout['status'], { label: string; className: string }> = {
   requested: { label: 'Solicitado', className: 'badge-warning' },
@@ -15,6 +17,15 @@ const statusLabel: Record<AffiliatePayout['status'], { label: string; className:
 const AffiliatePayouts = () => {
   const [payouts, setPayouts] = useState<AffiliatePayout[]>([]);
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const {
+    page,
+    setPage,
+    currentItems,
+    totalPages,
+    totalItems,
+    startItem,
+    endItem,
+  } = usePagination(payouts, 10);
 
   const load = async () => {
     const data = await getAffiliatePayouts();
@@ -44,7 +55,7 @@ const AffiliatePayouts = () => {
         <p className="text-sm text-muted-foreground">Aprove ou negue solicitações de saque</p>
       </div>
 
-      <div className="glass-card overflow-hidden overflow-x-auto">
+      <div className="admin-scroll-surface overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
@@ -59,7 +70,7 @@ const AffiliatePayouts = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {payouts.map(p => (
+            {currentItems.map(p => (
               <TableRow key={p.id}>
                 <TableCell className="font-medium">{p.affiliateName || ''}</TableCell>
                 <TableCell className="text-muted-foreground">{p.phone || '-'}</TableCell>
@@ -97,7 +108,7 @@ const AffiliatePayouts = () => {
                 </TableCell>
               </TableRow>
             ))}
-            {payouts.length === 0 && (
+            {currentItems.length === 0 && (
               <TableRow>
                 <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                   Nenhum pedido de saque encontrado
@@ -106,6 +117,16 @@ const AffiliatePayouts = () => {
             )}
           </TableBody>
         </Table>
+        <div className="px-4 pb-4">
+          <PaginationControls
+            page={page}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            startItem={startItem}
+            endItem={endItem}
+            onPageChange={setPage}
+          />
+        </div>
       </div>
     </div>
   );
