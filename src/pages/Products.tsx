@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useStore } from '@/contexts/StoreContext';
 import { Product } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Pencil, Trash2, Search, Star, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { usePagination } from '@/hooks/usePagination';
+import PaginationControls from '@/components/admin/PaginationControls';
 
 const defaultMediaItem = { type: 'image' as const, url: '' };
 const defaultForm = { name: '', description: '', price: '', rating: '4', stock: '', affiliatePercent: '5', selectedCategories: [] as string[], media: [defaultMediaItem] };
@@ -26,6 +28,19 @@ const Products = () => {
   if (filterCat !== 'all') filtered = filtered.filter(p => p.categories.includes(filterCat));
   if (filterStock === 'out') filtered = filtered.filter(p => p.stock === 0);
   else if (filterStock === 'in') filtered = filtered.filter(p => p.stock > 0);
+  const {
+    page,
+    setPage,
+    currentItems,
+    totalPages,
+    totalItems,
+    startItem,
+    endItem,
+  } = usePagination(filtered, 9);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, filterCat, filterStock, setPage]);
 
   const openNew = () => { setEditing(null); setForm(defaultForm); setDialogOpen(true); };
   const openEdit = (p: Product) => {
@@ -152,8 +167,9 @@ const Products = () => {
         </Select>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {filtered.map(p => (
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {currentItems.map(p => (
           <div key={p.id} className="glass-card overflow-hidden animate-fade-in">
             <div className="h-40 overflow-hidden bg-secondary flex items-center justify-center">
               <img src={getPrimaryImage(p)} alt={p.name} className="w-full h-full object-contain p-2" />
@@ -184,13 +200,22 @@ const Products = () => {
             </div>
           </div>
         ))}
-        {filtered.length === 0 && (
+        {currentItems.length === 0 && (
           <div className="col-span-full text-center text-muted-foreground py-12">Nenhum produto encontrado</div>
         )}
+        </div>
+        <PaginationControls
+          page={page}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          startItem={startItem}
+          endItem={endItem}
+          onPageChange={setPage}
+        />
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="bg-card border-border max-h-[90vh] overflow-y-auto">
+        <DialogContent className="admin-scroll bg-card border-border max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing ? 'Editar Produto' : 'Novo Produto'}</DialogTitle>
           </DialogHeader>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
 import { Order } from '@/types';
@@ -6,6 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Search, MapPin, Calendar, Clock } from 'lucide-react';
+import { usePagination } from '@/hooks/usePagination';
+import PaginationControls from '@/components/admin/PaginationControls';
 
 const statusStyles: Record<Order['status'], string> = {
   agendado: 'badge-info',
@@ -39,6 +41,19 @@ const Orders = () => {
     );
   });
   if (filterStatus !== 'all') filtered = filtered.filter(o => o.status === filterStatus);
+  const {
+    page,
+    setPage,
+    currentItems,
+    totalPages,
+    totalItems,
+    startItem,
+    endItem,
+  } = usePagination(filtered, 12);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, filterStatus, setPage]);
 
   const allStatuses: Order['status'][] = ['agendado', 'em_progresso', 'comprado', 'cancelado'];
 
@@ -68,7 +83,7 @@ const Orders = () => {
         </Select>
       </div>
 
-      <div className="glass-card overflow-hidden overflow-x-auto">
+      <div className="admin-scroll-surface overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
@@ -82,7 +97,7 @@ const Orders = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map(o => (
+            {currentItems.map(o => (
               <TableRow
                 key={o.id}
                 role="button"
@@ -112,11 +127,21 @@ const Orders = () => {
                 <TableCell className="text-right text-sm font-semibold">{formatPrice(o.totalAmount)}</TableCell>
               </TableRow>
             ))}
-            {filtered.length === 0 && (
+            {currentItems.length === 0 && (
               <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Nenhum pedido encontrado</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
+        <div className="px-4 pb-4">
+          <PaginationControls
+            page={page}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            startItem={startItem}
+            endItem={endItem}
+            onPageChange={setPage}
+          />
+        </div>
       </div>
     </div>
   );

@@ -12,7 +12,11 @@ export default defineConfig(({ mode }) => ({
     },
   },
   preview: {
-    allowedHosts: ["https://adminyetustore-nunf.onrender.com", "adminyetustore.shop"],
+    allowedHosts: [
+      "adminyetustore-nunf.onrender.com",
+      "adminyetustore.shop",
+      "yetuadmintest.onrender.com",
+    ],
   },
   plugins: [react()],
   resolve: {
